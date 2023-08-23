@@ -2,45 +2,44 @@ const express = require("express");
 const crypto = require("crypto");
 const cors = require("cors"); 
 
+// Initializes Express app.
 const app = express();
+
+// Parses JSON bodies.
 app.use(express.json());
 app.use(cors());
 
-let secret = ""; // This is where you'll store the secret during the handshake
-
-app.get('/', (req, res) => {
-  console.log("Connected to ngrok");
-  res.sendStatus(200);
-});
+let secret = "";
 
 app.post("/receiveWebhook", (req, res) => {
-  console.log("Webhook received "+ req.body);
+  if (req.headers["x-hook-secret"]) {
+    console.log("This is a new webhook");
+    secret = req.headers["x-hook-secret"];
 
-  if (req.headers["x-hook-signature"]) {
-    // During the handshake, check if it's a new webhook and store the secret
-    if (req.headers["x-hook-signature"] === "new-webhook") {
-      secret = req.body["secret"];
-      console.log("Received new webhook secret:", secret);
-      res.sendStatus(200);
+    res.setHeader("X-Hook-Secret", secret);
+    res.sendStatus(200);
+  } else if (req.headers["x-hook-signature"]) {
+    const computedSignature = crypto
+      .createHmac("SHA256", secret)
+      .update(JSON.stringify(req.body))
+      .digest("hex");
+
+    if (
+      !crypto.timingSafeEqual(
+        Buffer.from(req.headers["x-hook-signature"]),
+        Buffer.from(computedSignature)
+      )
+    ) {
+      // Fail
+      res.sendStatus(401);
     } else {
-      const computedSignature = crypto
-        .createHmac("sha256", secret)
-        .update(JSON.stringify(req.body))
-        .digest("hex");
-
-      if (req.headers["x-hook-signature"] === computedSignature) {
-        console.log("Webhook signature verified");
-        res.sendStatus(200);
-        console.log(`Events on ${Date()}:`);
-        console.log(req.body.events);
-      } else {
-        console.log("Webhook signature verification failed");
-        res.sendStatus(401);
-      }
+      // Success
+      res.sendStatus(200);
+      console.log(`Events on ${Date()}:`);
+      console.log(req.body.events);
     }
   } else {
-    console.error("No x-hook-signature header found in request");
-    res.sendStatus(400);
+    console.error("Something went wrong!");
   }
 });
 
