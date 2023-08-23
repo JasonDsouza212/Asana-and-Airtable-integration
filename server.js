@@ -1,8 +1,10 @@
 const express = require("express");
 const crypto = require("crypto");
+const cors = require("cors"); 
 
 const app = express();
 app.use(express.json());
+app.use(cors());
 
 let secret = ""; // This is where you'll store the secret during the handshake
 
