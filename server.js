@@ -11,6 +11,7 @@ app.get('/',(req,res)=>{
 })
 
 app.post("/receiveWebhook", (req, res) => {
+  console.log(req)
   if (req.headers["x-hook-secret"]) {
     console.log("This is a new webhook");
     secret = req.headers["x-hook-secret"];
