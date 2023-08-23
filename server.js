@@ -11,6 +11,11 @@ app.use(cors());
 
 let secret = "";
 
+app.get('/', (req, res) => {
+  console.log("Connected to ngrok");
+  res.sendStatus(200);
+});
+
 app.post("/receiveWebhook", (req, res) => {
   if (req.headers["x-hook-secret"]) {
     console.log("This is a new webhook");
