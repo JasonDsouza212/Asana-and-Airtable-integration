@@ -24,6 +24,7 @@ app.post("/receiveWebhook", (req, res) => {
     res.setHeader("X-Hook-Secret", secret);
     res.sendStatus(200);
   } else if (req.headers["x-hook-signature"]) {
+    console.log("trying to fetch the data")
     const computedSignature = crypto
       .createHmac("SHA256", secret)
       .update(JSON.stringify(req.body))
