@@ -34,6 +34,7 @@ app.post("/receiveWebhook", (req, res) => {
       res.sendStatus(401);
     } else {
       // Success
+      console.log(req.body)
       res.sendStatus(200);
       console.log(`Events on ${Date()}:`);
       console.log(req.body.events);
