@@ -44,15 +44,13 @@ const edittask = async (req, res) => {
 
         const requestBody = {
             "fields": {
-                "Deadline":Deadline,
-                "Name":Name,
+                "Deadline": Deadline,
+                "Name": Name,
                 "Assignee": Assignee,
                 "Description": Description,
                 "Taskid": Taskid
             }
         };
-        console.log(airtaskid+ "This is the id")
-        console.log(requestBody)
 
         const response = await fetch(`https://api.airtable.com/v0/${process.env.AIRTABLE_BASEID}/${process.env.AIRTABLE_TABLEID}/${airtaskid}`, {
             method: "PUT", 
@@ -76,31 +74,27 @@ const edittask = async (req, res) => {
     }
 };
 
-
 const getalltasks = async (req, res) => {
     try {
-  
-      const response = await fetch(`https://api.airtable.com/v0/${process.env.AIRTABLE_BASEID}/${process.env.AIRTABLE_TABLEID}`, {
-        method: "GET",
-        headers: {
-          Authorization: `Bearer ${process.env.AIRTABLE_ACCESS_TOKEN}`
+        const response = await fetch(`https://api.airtable.com/v0/${process.env.AIRTABLE_BASEID}/${process.env.AIRTABLE_TABLEID}`, {
+            method: "GET",
+            headers: {
+                Authorization: `Bearer ${process.env.AIRTABLE_ACCESS_TOKEN}`
+            }
+        });
+
+        if (response.ok) {
+            const taskData = await response.json();
+            return res.json(taskData); 
+        } else {
+            console.log("Error fetching tasks:");
+            res.status(response.status).send("Error fetching tasks");
         }
-      });
-  
-      if (response.ok) {
-        const taskData = await response.json();
-        return res.json(taskData); 
-      } else {
-        console.error("Error fetching tasks:");
-        res.status(response.status).send("Error fetching tasks");
-      }
     } catch (error) {
-      console.error("Error fetching tasks:");
-      res.status(500).send("Error fetching tasks");
+        console.log("Error fetching tasks:");
+        res.status(500).send("Error fetching tasks");
     }
-  }
-
-
+};
 
 module.exports = {
     addtask,

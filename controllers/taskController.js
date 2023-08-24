@@ -11,7 +11,6 @@ const gettask = async (req, res) => {
   
       if (response.ok) {
         const taskData = await response.json();
-        // console.log(taskData)
         return res.json(taskData); 
       } else {
         console.error("Error fetching task:", response.statusText);

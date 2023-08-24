@@ -10,7 +10,7 @@ app.use(express.json());
 app.use(cors());
 
 app.get("/",(req,res)=>{
-  console.log("trying ")
+  console.log("Connection is made ")
 })
 
 app.post("/receiveWebhook",recivewebhook );
