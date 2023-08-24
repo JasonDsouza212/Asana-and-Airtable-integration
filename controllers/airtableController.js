@@ -53,7 +53,7 @@ const edittask = async (req, res) => {
         };
 
         const response = await fetch(`https://api.airtable.com/v0/${process.env.AIRTABLE_BASEID}/${process.env.AIRTABLE_TABLEID}/${airtaskid}`, {
-            method: "PUT", 
+            method: "PATCH", 
             headers: {
                 Authorization: `Bearer ${process.env.AIRTABLE_ACCESS_TOKEN}`,
                 "Content-Type": "application/json" 

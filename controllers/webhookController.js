@@ -7,7 +7,7 @@ let isProcessing = false;
 
 const recivewebhook = async (req, res) => {
     if (isProcessing === false) {
-        isProcessing = true;
+       
         if (req.headers["x-hook-secret"]) {
             // Runs when a new webhook is created
             secret = req.headers["x-hook-secret"];
@@ -17,6 +17,7 @@ const recivewebhook = async (req, res) => {
             res.sendStatus(200);
             return;
         } else if (req.headers["x-hook-signature"]) {
+            isProcessing = true;
             // Runs when the webhook is triggered
             const computedSignature = crypto
                 .createHmac("SHA256", secret)
@@ -75,7 +76,7 @@ const recivewebhook = async (req, res) => {
                     const alltasks = await fetch(`${process.env.URL}/airtable/alltasks`);
                     const ans = await alltasks.json();
 
-                    const matchingRecord = ans.records.find(record => record.fields.Taskid === taskid);
+                    const matchingRecord = await ans.records.find(record => record.fields.Taskid === taskid);
                     if (!matchingRecord) {
                         // If there is any error while adding the task to Airtable then it will be added here
                         addtaskapi(requestBody);
