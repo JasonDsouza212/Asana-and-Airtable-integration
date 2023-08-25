@@ -30,7 +30,16 @@ const editedtask = async (requestBody) => {
     });
 }
 
+const taskid = async()=>{
+    const alltasks = await fetch(`${process.env.URL}/airtable/alltasks`);
+    const ans = await alltasks.json();
+
+    const matchingRecord = await ans.records.find(record => record.fields.Taskid === taskid);
+    return matchingRecord;
+}
+
 module.exports = {
     addtaskapi,
-    editedtask
+    editedtask,
+    taskid
 };
