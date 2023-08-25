@@ -1,5 +1,5 @@
 const crypto = require("crypto");
-const { addtaskapi, editedtask } = require('../requests/request');
+const { addtaskapi, editedtask,taskid } = require('../requests/request');
 require('dotenv').config();
 
 let secret = process.env.WEBHOOK_SECRET;
@@ -56,27 +56,22 @@ const recivewebhook = async (req, res) => {
                 // Saving all the data I need to store it on Airtable
                 let requestBody = {};
                 if (typ == "added" || typ == "changed") {
-                    if (taskdata == undefined) {
-                        isProcessing = false;
-                        return;
-                    }
-                    requestBody = {
-                        Deadline: taskdata.data.due_on ? taskdata.data.due_on : "No Deadline specified",
-                        Name: taskdata.data.name ? taskdata.data.name : "",
-                        Assignee: taskdata.data.assignee ? taskdata.data.assignee.name : "",
-                        Description: taskdata.data.notes ? taskdata.data.notes : "",
-                        Taskid: taskid
-                    };
+                    if (taskdata != undefined) {
+                        requestBody = {
+                            Deadline: taskdata.data.due_on ? taskdata.data.due_on : "No Deadline specified",
+                            Name: taskdata.data.name ? taskdata.data.name : "",
+                            Assignee: taskdata.data.assignee ? taskdata.data.assignee.name : "",
+                            Description: taskdata.data.notes ? taskdata.data.notes : "",
+                            Taskid: taskid
+                        };
+                    }                   
                 }
 
                 // Determining what type of action is made because when it's new we need to add it, if it already exists then we need to edit it
                 if (typ == "added") {
                     addtaskapi(requestBody);
                 } else if (typ == "changed") {
-                    const alltasks = await fetch(`${process.env.URL}/airtable/alltasks`);
-                    const ans = await alltasks.json();
-
-                    const matchingRecord = await ans.records.find(record => record.fields.Taskid === taskid);
+                    const matchingRecord=taskid()
                     if (!matchingRecord) {
                         // If there is any error while adding the task to Airtable then it will be added here
                         addtaskapi(requestBody);
@@ -88,10 +83,7 @@ const recivewebhook = async (req, res) => {
                     // Making edit request
                     editedtask(requestBody);
                 } else if (typ == "deleted") {
-                    const alltasks = await fetch(`${process.env.URL}/airtable/alltasks`);
-                    const ans = await alltasks.json();
-
-                    const matchingRecord = ans.records.find(record => record.fields.Taskid === taskid);
+                    const matchingRecord=taskid()
                     if (!matchingRecord) {
                         // If there is any error while adding the task to Airtable then it will be added here
                         console.log("no data found on Airtable with the specified id");
