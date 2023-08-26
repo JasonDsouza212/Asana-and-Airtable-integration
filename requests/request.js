@@ -30,7 +30,7 @@ const editedtask = async (requestBody) => {
     });
 }
 
-const taskid = async()=>{
+const gettaskid = async()=>{
     const alltasks = await fetch(`${process.env.URL}/airtable/alltasks`);
     const ans = await alltasks.json();
 
@@ -38,8 +38,22 @@ const taskid = async()=>{
     return matchingRecord;
 }
 
+async function deleteairtabletask(id) {
+    const deletetask = await fetch(`https://api.airtable.com/v0/${process.env.AIRTABLE_BASEID}/${process.env.AIRTABLE_TABLEID}/${id}`, {
+        method: "DELETE",
+        headers: {
+            "Authorization": `Bearer ${process.env.AIRTABLE_ACCESS_TOKEN}`,
+            "Content-Type": "application/json"
+        }
+    });
+    return deletetask
+}
+
+
+
 module.exports = {
     addtaskapi,
     editedtask,
-    taskid
+    gettaskid,
+    deleteairtabletask
 };
