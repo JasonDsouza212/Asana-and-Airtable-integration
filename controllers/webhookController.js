@@ -1,5 +1,5 @@
 const crypto = require("crypto");
-const { addtaskapi, editedtask, gettaskid, deleteairtabletask } = require('../requests/request');
+const { addtaskapi, editedtask, gettaskid, deleteairtabletask , fetchasanatask} = require('../requests/request');
 require('dotenv').config();
 
 let secret = process.env.WEBHOOK_SECRET;
@@ -34,27 +34,14 @@ const recivewebhook = async (req, res) => {
                 res.sendStatus(401);
             } else {
                 // Success
-                res.sendStatus(200);
+                res.sendStatus(200); 
                 console.log(`Events on ${Date()}:`);
                 const taskid = req.body.events[0].resource.gid;
-                const typ = req.body.events[0].action;
+                let typ = req.body.events[0].action;
 
-                // Fetching the task data from Asana as it doesn't provide the data
-                const task = async () => {
-                    if (typ != "deleted") {
-                        try {
-                            const fetchResponse = await fetch(`${process.env.URL}/gettask/${taskid}`);
-                            const taskData = await fetchResponse.json();
-                            return taskData;
-                        } catch (error) {
-                            console.error("Error fetching task:", error);
-                        }
-                    }
-                };
-
-                const taskdata = await task();
+                const taskdata = await fetchasanatask(taskid , typ);
                 // Saving all the data I need to store it on Airtable
-                let requestBody = {};
+                let requestBody ;
                 if (typ == "added" || typ == "changed") {
                     if (taskdata != undefined) {
                         requestBody = {
@@ -67,38 +54,59 @@ const recivewebhook = async (req, res) => {
                     }                   
                 }
 
-                // Determining what type of action is made because when it's new we need to add it, if it already exists then we need to edit it
-                if (typ == "added") {
-                    addtaskapi(requestBody);
-                } else if (typ == "changed") {
-                    const matchingRecord=gettaskid()
-                    if (!matchingRecord) {
+                const matchingRecord= await gettaskid(taskid)
+                if(typ!="deleted" && matchingRecord!=undefined) {
+                    typ="changed";
+                }
+
+                switch (typ) {
+                    case "added":
+                      addtaskapi(requestBody);
+                      break;
+                  
+                    case "changed":
+                        // if the edit is done and suudenly its deleted
+                        if(requestBody==undefined) {
+                            isProcessing = false;
+                            return;
+                        }
+
+                        if (matchingRecord == undefined) {
                         // If there is any error while adding the task to Airtable then it will be added here
                         addtaskapi(requestBody);
                         isProcessing = false;
                         return;
-                    }
-                    const editid = matchingRecord.id;
-                    requestBody.airtaskid = editid;
-                    // Making edit request
-                    editedtask(requestBody);
-                } else if (typ == "deleted") {
-                    const matchingRecord=gettaskid()
-                    if (!matchingRecord) {
+                        }
+
+                        const editid = matchingRecord.id;
+                        requestBody.airtaskid = editid;
+                        // Making edit request
+                        await editedtask(requestBody);
+                        console.log("Data edited successfully")
+                        
+                        break;
+                  
+                    case "deleted":
+                      // const matchingRecord= await gettaskid(taskid) 
+                      if (!matchingRecord) {
                         // If there is any error while adding the task to Airtable then it will be added here
                         console.log("no data found on Airtable with the specified id");
                         isProcessing = false;
                         return;
-                    }
-                    const deletetask = deleteairtabletask(matchingRecord.id)
-
-                    if (deletetask.ok) {
+                      }
+                      const deletetask = await deleteairtabletask(matchingRecord.id);
+                  
+                      if (deletetask.ok) {
                         console.log("Task deleted successfully from Airtable");
-                    } else {
+                      } else {
                         console.error("Error deleting task:");
-                    }
-                }
-            }
+                      }
+                      break;
+                  
+                    default:
+                      console.log("Unknown action:", typ);
+                  }                  
+            }  
         } else {
             console.error("Something went wrong!");
         }

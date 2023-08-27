@@ -30,7 +30,7 @@ const editedtask = async (requestBody) => {
     });
 }
 
-const gettaskid = async()=>{
+const gettaskid = async(taskid)=>{
     const alltasks = await fetch(`${process.env.URL}/airtable/alltasks`);
     const ans = await alltasks.json();
 
@@ -49,11 +49,28 @@ async function deleteairtabletask(id) {
     return deletetask
 }
 
-
+async function fetchasanatask(taskid , typ){
+    if (typ != "deleted") {
+        try {
+            let taskData;
+            const fetchResponse = await fetch(`${process.env.URL}/gettask/${taskid}`);
+            
+            if(fetchResponse.ok){
+            taskData = await fetchResponse.json();
+            return taskData;
+            }else {
+                console.error("Error fetching task:", fetchResponse.statusText);
+              }
+        } catch (error) {
+            console.error("Error fetching task:", error);
+        }
+    }
+};
 
 module.exports = {
     addtaskapi,
     editedtask,
     gettaskid,
-    deleteairtabletask
+    deleteairtabletask,
+    fetchasanatask
 };
