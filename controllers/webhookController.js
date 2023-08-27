@@ -1,5 +1,5 @@
 const crypto = require("crypto");
-const { addtaskapi, editedtask,taskid } = require('../requests/request');
+const { addtaskapi, editedtask, gettaskid, deleteairtabletask } = require('../requests/request');
 require('dotenv').config();
 
 let secret = process.env.WEBHOOK_SECRET;
@@ -71,7 +71,7 @@ const recivewebhook = async (req, res) => {
                 if (typ == "added") {
                     addtaskapi(requestBody);
                 } else if (typ == "changed") {
-                    const matchingRecord=taskid()
+                    const matchingRecord=gettaskid()
                     if (!matchingRecord) {
                         // If there is any error while adding the task to Airtable then it will be added here
                         addtaskapi(requestBody);
@@ -83,20 +83,14 @@ const recivewebhook = async (req, res) => {
                     // Making edit request
                     editedtask(requestBody);
                 } else if (typ == "deleted") {
-                    const matchingRecord=taskid()
+                    const matchingRecord=gettaskid()
                     if (!matchingRecord) {
                         // If there is any error while adding the task to Airtable then it will be added here
                         console.log("no data found on Airtable with the specified id");
                         isProcessing = false;
                         return;
                     }
-                    const deletetask = await fetch(`https://api.airtable.com/v0/${process.env.AIRTABLE_BASEID}/${process.env.AIRTABLE_TABLEID}/${matchingRecord.id}`, {
-                        method: "DELETE",
-                        headers: {
-                            "Authorization": `Bearer ${process.env.AIRTABLE_ACCESS_TOKEN}`,
-                            "Content-Type": "application/json"
-                        }
-                    });
+                    const deletetask = deleteairtabletask(matchingRecord.id)
 
                     if (deletetask.ok) {
                         console.log("Task deleted successfully from Airtable");
